@@ -106,13 +106,18 @@ else
     echo "ℹ️  No version tag (normal for non-release commits)"
 fi
 
-# Ensure main branch is up to date with remote
+# Ensure main branch is up to date with remote (skip for initial push)
 echo "🔄 Checking if branch is up to date..."
-git fetch origin $protected_branch --quiet
-if [ "$(git rev-parse HEAD)" != "$(git rev-parse @{u})" ]; then
-    echo "❌ Your $protected_branch branch is not up to date with origin"
-    echo "Please pull the latest changes first"
-    exit 1
+if git ls-remote --heads origin $protected_branch | grep -q $protected_branch; then
+    git fetch origin $protected_branch --quiet
+    if [ "$(git rev-parse HEAD)" != "$(git rev-parse @{u})" ]; then
+        echo "❌ Your $protected_branch branch is not up to date with origin"
+        echo "Please pull the latest changes first"
+        exit 1
+    fi
+    echo "✅ Branch is up to date with remote"
+else
+    echo "ℹ️  Initial push to empty repository - skipping upstream check"
 fi
 
 echo "✅ All pre-push checks passed! Ready to push to $protected_branch"
