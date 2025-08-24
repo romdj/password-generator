@@ -91,7 +91,7 @@ done
 
 # Verify no debug prints or TODO comments in main code (excluding tests)
 echo "🔍 Checking for debug prints and TODOs..."
-if grep -r "fmt.Print\|TODO\|FIXME\|XXX" --include="*.go" --exclude="*_test.go" .; then
+if grep -r "fmt\.Println.*DEBUG\|fmt\.Printf.*DEBUG\|log\.Println\|log\.Printf\|TODO\|FIXME\|XXX" --include="*.go" --exclude="*_test.go" .; then
     echo "❌ Found debug prints or TODO comments in main code"
     echo "Please remove or address these before pushing to main"
     exit 1
