@@ -1,0 +1,1 @@
+- I'd like to avoid any .sh file in favor of go scripts and tools

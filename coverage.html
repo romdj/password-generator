@@ -61,7 +61,7 @@
 				
 				<option value="file2">github.com/romdj/password-generator/policy.go (100.0%)</option>
 				
-				<option value="file3">github.com/romdj/password-generator/strength.go (96.8%)</option>
+				<option value="file3">github.com/romdj/password-generator/strength.go (100.0%)</option>
 				
 				</select>
 			</div>
@@ -226,7 +226,7 @@ func (c Config) ToPasswordConfig() PasswordConfig <span class="cov1" title="1">{
         }
 }</span>
 
-func SaveConfigExample(path string) error <span class="cov3" title="2">{
+func SaveConfigExample(path string) error <span class="cov4" title="3">{
         config := Config{
                 Length:           16,
                 IncludeUpper:     true,
@@ -245,7 +245,7 @@ func SaveConfigExample(path string) error <span class="cov3" title="2">{
         }</span>
 
         // Add header comment
-        <span class="cov3" title="2">header := `# Password Generator Configuration
+        <span class="cov4" title="3">header := `# Password Generator Configuration
 # This file contains default settings for the password generator
 # Place this file in your home directory as ~/.pwgen.yaml or in the current directory as .pwgen.yaml
 # Environment variables (PWGEN_*) will override these settings
@@ -853,7 +853,7 @@ const (
         VeryStrong
 )
 
-func (s StrengthLevel) String() string <span class="cov4" title="14">{
+func (s StrengthLevel) String() string <span class="cov3" title="14">{
         switch s </span>{
         case VeryWeak:<span class="cov1" title="2">
                 return "Very Weak"</span>
@@ -899,113 +899,113 @@ type PasswordStrength struct {
         TimeToCrack string
 }
 
-func AnalyzePasswordStrength(password string) PasswordStrength <span class="cov2" title="5">{
+func AnalyzePasswordStrength(password string) PasswordStrength <span class="cov4" title="19">{
         score := 0
         var feedback []string
 
         length := len(password)
 
         // Length scoring
-        if length &lt; 8 </span><span class="cov1" title="1">{
+        if length &lt; 8 </span><span class="cov2" title="4">{
                 feedback = append(feedback, "Use at least 8 characters")
-        }</span> else<span class="cov2" title="4"> if length &lt; 12 </span><span class="cov1" title="1">{
+        }</span> else<span class="cov3" title="15"> if length &lt; 12 </span><span class="cov1" title="2">{
                 score += 10
                 feedback = append(feedback, "Consider using 12+ characters for better security")
-        }</span> else<span class="cov2" title="3"> if length &lt; 16 </span><span class="cov1" title="2">{
+        }</span> else<span class="cov3" title="13"> if length &lt; 16 </span><span class="cov2" title="6">{
                 score += 20
-        }</span> else<span class="cov1" title="1"> {
+        }</span> else<span class="cov3" title="7"> {
                 score += 30
         }</span>
 
         // Character variety scoring
-        <span class="cov2" title="5">hasLower := regexp.MustCompile(`[a-z]`).MatchString(password)
+        <span class="cov4" title="19">hasLower := regexp.MustCompile(`[a-z]`).MatchString(password)
         hasUpper := regexp.MustCompile(`[A-Z]`).MatchString(password)
         hasDigit := regexp.MustCompile(`[0-9]`).MatchString(password)
         hasSymbol := regexp.MustCompile(`[^a-zA-Z0-9]`).MatchString(password)
 
         varietyCount := 0
-        if hasLower </span><span class="cov2" title="4">{
+        if hasLower </span><span class="cov4" title="17">{
                 varietyCount++
                 score += 10
-        }</span> else<span class="cov1" title="1"> {
+        }</span> else<span class="cov1" title="2"> {
                 feedback = append(feedback, "Add lowercase letters")
         }</span>
 
-        <span class="cov2" title="5">if hasUpper </span><span class="cov2" title="3">{
+        <span class="cov4" title="19">if hasUpper </span><span class="cov3" title="12">{
                 varietyCount++
                 score += 10
-        }</span> else<span class="cov1" title="2"> {
+        }</span> else<span class="cov3" title="7"> {
                 feedback = append(feedback, "Add uppercase letters")
         }</span>
 
-        <span class="cov2" title="5">if hasDigit </span><span class="cov2" title="5">{
+        <span class="cov4" title="19">if hasDigit </span><span class="cov3" title="15">{
                 varietyCount++
                 score += 10
-        }</span> else<span class="cov0" title="0"> {
+        }</span> else<span class="cov2" title="4"> {
                 feedback = append(feedback, "Add numbers")
         }</span>
 
-        <span class="cov2" title="5">if hasSymbol </span><span class="cov2" title="3">{
+        <span class="cov4" title="19">if hasSymbol </span><span class="cov3" title="12">{
                 varietyCount++
                 score += 15
-        }</span> else<span class="cov1" title="2"> {
+        }</span> else<span class="cov3" title="7"> {
                 feedback = append(feedback, "Add symbols (!@#$%^&amp;*)")
         }</span>
 
         // Bonus for using all character types
-        <span class="cov2" title="5">if varietyCount == 4 </span><span class="cov2" title="3">{
+        <span class="cov4" title="19">if varietyCount == 4 </span><span class="cov3" title="9">{
                 score += 10
         }</span>
 
         // Pattern penalties
-        <span class="cov2" title="5">if hasRepeatedChars(password) </span><span class="cov0" title="0">{
+        <span class="cov4" title="19">if hasRepeatedChars(password) </span><span class="cov1" title="1">{
                 score -= 10
                 feedback = append(feedback, "Avoid repeated characters")
         }</span>
 
-        <span class="cov2" title="5">if hasSequentialChars(password) </span><span class="cov2" title="3">{
+        <span class="cov4" title="19">if hasSequentialChars(password) </span><span class="cov3" title="11">{
                 score -= 15
                 feedback = append(feedback, "Avoid sequential characters (abc, 123)")
         }</span>
 
-        <span class="cov2" title="5">if hasCommonPatterns(password) </span><span class="cov1" title="1">{
+        <span class="cov4" title="19">if hasCommonPatterns(password) </span><span class="cov2" title="6">{
                 score -= 20
                 feedback = append(feedback, "Avoid common patterns")
         }</span>
 
         // Calculate entropy
-        <span class="cov2" title="5">entropy := calculateEntropy(password)
+        <span class="cov4" title="19">entropy := calculateEntropy(password)
 
         // Adjust score based on entropy
-        if entropy &gt;= 60 </span><span class="cov1" title="2">{
+        if entropy &gt;= 60 </span><span class="cov3" title="9">{
                 score += 20
-        }</span> else<span class="cov2" title="3"> if entropy &gt;= 40 </span><span class="cov1" title="1">{
+        }</span> else<span class="cov3" title="10"> if entropy &gt;= 40 </span><span class="cov2" title="4">{
                 score += 10
-        }</span> else<span class="cov1" title="2"> if entropy &lt; 25 </span><span class="cov1" title="1">{
+        }</span> else<span class="cov2" title="6"> if entropy &lt; 25 </span><span class="cov2" title="5">{
                 score -= 15
                 feedback = append(feedback, "Password is too predictable")
         }</span>
 
         // Ensure score is within bounds
-        <span class="cov2" title="5">if score &lt; 0 </span><span class="cov1" title="1">{
+        <span class="cov4" title="19">if score &lt; 0 </span><span class="cov2" title="5">{
                 score = 0
         }</span>
-        <span class="cov2" title="5">if score &gt; 100 </span><span class="cov0" title="0">{
+        <span class="cov4" title="19">if score &gt; 100 </span><span class="cov1" title="1">{
                 score = 100
         }</span>
 
         // Determine strength level
-        <span class="cov2" title="5">level := getStrengthLevel(score)
+        <span class="cov4" title="19">level := getStrengthLevel(score)
 
         // Generate time to crack estimate
         timeToCrack := estimateTimeToCrack(entropy)
 
         // Add positive feedback for strong passwords
-        if score &gt;= 80 &amp;&amp; len(feedback) == 0 </span><span class="cov1" title="1">{
+        if score &gt;= 80 &amp;&amp; len(feedback) == 0 </span><span class="cov1" title="2">{
                 feedback = append(feedback, "Excellent password strength!")
         }</span>
 
-        <span class="cov2" title="5">return PasswordStrength{
+        <span class="cov4" title="19">return PasswordStrength{
                 Score:       score,
                 Level:       level,
                 Entropy:     entropy,
@@ -1014,54 +1014,54 @@ func AnalyzePasswordStrength(password string) PasswordStrength <span class="cov2
         }</span>
 }
 
-func calculateEntropy(password string) float64 <span class="cov4" title="19">{
+func calculateEntropy(password string) float64 <span class="cov4" title="37">{
         // Determine character space
         charSpace := 0
 
-        if regexp.MustCompile(`[a-z]`).MatchString(password) </span><span class="cov4" title="16">{
+        if regexp.MustCompile(`[a-z]`).MatchString(password) </span><span class="cov4" title="30">{
                 charSpace += 26 // lowercase
         }</span>
-        <span class="cov4" title="19">if regexp.MustCompile(`[A-Z]`).MatchString(password) </span><span class="cov4" title="13">{
+        <span class="cov4" title="37">if regexp.MustCompile(`[A-Z]`).MatchString(password) </span><span class="cov4" title="23">{
                 charSpace += 26 // uppercase
         }</span>
-        <span class="cov4" title="19">if regexp.MustCompile(`[0-9]`).MatchString(password) </span><span class="cov4" title="15">{
+        <span class="cov4" title="37">if regexp.MustCompile(`[0-9]`).MatchString(password) </span><span class="cov4" title="26">{
                 charSpace += 10 // digits
         }</span>
-        <span class="cov4" title="19">if regexp.MustCompile(`[^a-zA-Z0-9]`).MatchString(password) </span><span class="cov3" title="9">{
+        <span class="cov4" title="37">if regexp.MustCompile(`[^a-zA-Z0-9]`).MatchString(password) </span><span class="cov4" title="19">{
                 charSpace += 32 // common symbols
         }</span>
 
-        <span class="cov4" title="19">if charSpace == 0 </span><span class="cov1" title="1">{
+        <span class="cov4" title="37">if charSpace == 0 </span><span class="cov1" title="1">{
                 return 0
         }</span>
 
         // Entropy = length * log2(character_space)
-        <span class="cov4" title="18">entropy := float64(len(password)) * math.Log2(float64(charSpace))
+        <span class="cov4" title="36">entropy := float64(len(password)) * math.Log2(float64(charSpace))
 
         // Apply penalties for patterns
-        if hasRepeatedChars(password) </span><span class="cov0" title="0">{
+        if hasRepeatedChars(password) </span><span class="cov1" title="1">{
                 entropy *= 0.8
         }</span>
-        <span class="cov4" title="18">if hasSequentialChars(password) </span><span class="cov3" title="10">{
+        <span class="cov4" title="36">if hasSequentialChars(password) </span><span class="cov4" title="20">{
                 entropy *= 0.7
         }</span>
-        <span class="cov4" title="18">if hasCommonPatterns(password) </span><span class="cov2" title="5">{
+        <span class="cov4" title="36">if hasCommonPatterns(password) </span><span class="cov3" title="10">{
                 entropy *= 0.6
         }</span>
 
-        <span class="cov4" title="18">return entropy</span>
+        <span class="cov4" title="36">return entropy</span>
 }
 
-func hasRepeatedChars(password string) bool <span class="cov4" title="27">{
-        for i := 0; i &lt; len(password)-2; i++ </span><span class="cov7" title="243">{
-                if password[i] == password[i+1] &amp;&amp; password[i+1] == password[i+2] </span><span class="cov1" title="2">{
+func hasRepeatedChars(password string) bool <span class="cov5" title="59">{
+        for i := 0; i &lt; len(password)-2; i++ </span><span class="cov8" title="909">{
+                if password[i] == password[i+1] &amp;&amp; password[i+1] == password[i+2] </span><span class="cov2" title="4">{
                         return true
                 }</span>
         }
-        <span class="cov4" title="25">return false</span>
+        <span class="cov5" title="55">return false</span>
 }
 
-func hasSequentialChars(password string) bool <span class="cov4" title="28">{
+func hasSequentialChars(password string) bool <span class="cov5" title="60">{
         sequences := []string{
                 "abcdefghijklmnopqrstuvwxyz",
                 "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
@@ -1071,28 +1071,28 @@ func hasSequentialChars(password string) bool <span class="cov4" title="28">{
         }
 
         lower := strings.ToLower(password)
-        for _, seq := range sequences </span><span class="cov7" title="151">{
-                for i := 0; i &lt;= len(seq)-3; i++ </span><span class="cov10" title="1812">{
-                        if strings.Contains(lower, seq[i:i+3]) </span><span class="cov4" title="16">{
+        for _, seq := range sequences </span><span class="cov7" title="325">{
+                for i := 0; i &lt;= len(seq)-3; i++ </span><span class="cov10" title="3909">{
+                        if strings.Contains(lower, seq[i:i+3]) </span><span class="cov4" title="34">{
                                 return true
                         }</span>
                 }
         }
 
         // Check for reverse sequences
-        <span class="cov3" title="12">for _, seq := range sequences </span><span class="cov6" title="100">{
+        <span class="cov4" title="26">for _, seq := range sequences </span><span class="cov6" title="226">{
                 reversed := reverseString(seq)
-                for i := 0; i &lt;= len(reversed)-3; i++ </span><span class="cov9" title="1080">{
+                for i := 0; i &lt;= len(reversed)-3; i++ </span><span class="cov9" title="2424">{
                         if strings.Contains(lower, reversed[i:i+3]) </span><span class="cov1" title="1">{
                                 return true
                         }</span>
                 }
         }
 
-        <span class="cov3" title="11">return false</span>
+        <span class="cov4" title="25">return false</span>
 }
 
-func hasCommonPatterns(password string) bool <span class="cov4" title="27">{
+func hasCommonPatterns(password string) bool <span class="cov5" title="59">{
         commonPatterns := []string{
                 "password", "123456", "qwerty", "admin", "login",
                 "welcome", "monkey", "dragon", "master", "shadow",
@@ -1100,49 +1100,49 @@ func hasCommonPatterns(password string) bool <span class="cov4" title="27">{
         }
 
         lower := strings.ToLower(password)
-        for _, pattern := range commonPatterns </span><span class="cov7" title="323">{
-                if strings.Contains(lower, pattern) </span><span class="cov3" title="6">{
+        for _, pattern := range commonPatterns </span><span class="cov8" title="691">{
+                if strings.Contains(lower, pattern) </span><span class="cov3" title="14">{
                         return true
                 }</span>
         }
 
         // Check for simple substitutions
-        <span class="cov4" title="21">substitutions := map[string]string{
+        <span class="cov5" title="45">substitutions := map[string]string{
                 "@": "a", "3": "e", "1": "i", "0": "o", "5": "s", "7": "t",
         }
 
         normalized := lower
-        for symbol, letter := range substitutions </span><span class="cov6" title="126">{
+        for symbol, letter := range substitutions </span><span class="cov7" title="270">{
                 normalized = strings.ReplaceAll(normalized, symbol, letter)
         }</span>
 
-        <span class="cov4" title="21">for _, pattern := range commonPatterns </span><span class="cov7" title="273">{
-                if strings.Contains(normalized, pattern) </span><span class="cov2" title="3">{
+        <span class="cov5" title="45">for _, pattern := range commonPatterns </span><span class="cov7" title="605">{
+                if strings.Contains(normalized, pattern) </span><span class="cov2" title="5">{
                         return true
                 }</span>
         }
 
-        <span class="cov4" title="18">return false</span>
+        <span class="cov5" title="40">return false</span>
 }
 
-func getStrengthLevel(score int) StrengthLevel <span class="cov4" title="17">{
+func getStrengthLevel(score int) StrengthLevel <span class="cov4" title="31">{
         switch </span>{
-        case score &lt; 20:<span class="cov2" title="4">
+        case score &lt; 20:<span class="cov3" title="8">
                 return VeryWeak</span>
         case score &lt; 40:<span class="cov1" title="2">
                 return Weak</span>
-        case score &lt; 60:<span class="cov1" title="2">
+        case score &lt; 60:<span class="cov2" title="4">
                 return Fair</span>
-        case score &lt; 80:<span class="cov2" title="3">
+        case score &lt; 80:<span class="cov3" title="9">
                 return Good</span>
-        case score &lt; 95:<span class="cov2" title="3">
+        case score &lt; 95:<span class="cov2" title="4">
                 return Strong</span>
-        default:<span class="cov2" title="3">
+        default:<span class="cov2" title="4">
                 return VeryStrong</span>
         }
 }
 
-func estimateTimeToCrack(entropy float64) string <span class="cov2" title="5">{
+func estimateTimeToCrack(entropy float64) string <span class="cov4" title="19">{
         // Assume 1 billion guesses per second (modern hardware)
         guessesPerSecond := 1e9
 
@@ -1155,34 +1155,34 @@ func estimateTimeToCrack(entropy float64) string <span class="cov2" title="5">{
         return formatDuration(secondsToCrack)
 }</span>
 
-func formatDuration(seconds float64) string <span class="cov4" title="14">{
-        if seconds &lt; 1 </span><span class="cov1" title="2">{
+func formatDuration(seconds float64) string <span class="cov4" title="28">{
+        if seconds &lt; 1 </span><span class="cov2" title="6">{
                 return "Instant"
-        }</span> else<span class="cov3" title="12"> if seconds &lt; 60 </span><span class="cov1" title="2">{
+        }</span> else<span class="cov4" title="22"> if seconds &lt; 60 </span><span class="cov1" title="2">{
                 return fmt.Sprintf("%.0f seconds", seconds)
-        }</span> else<span class="cov3" title="10"> if seconds &lt; 3600 </span><span class="cov1" title="1">{
+        }</span> else<span class="cov4" title="20"> if seconds &lt; 3600 </span><span class="cov1" title="1">{
                 return fmt.Sprintf("%.0f minutes", seconds/60)
-        }</span> else<span class="cov3" title="9"> if seconds &lt; 86400 </span><span class="cov1" title="1">{
+        }</span> else<span class="cov4" title="19"> if seconds &lt; 86400 </span><span class="cov1" title="1">{
                 return fmt.Sprintf("%.0f hours", seconds/3600)
-        }</span> else<span class="cov3" title="8"> if seconds &lt; 31536000 </span><span class="cov1" title="1">{
+        }</span> else<span class="cov4" title="18"> if seconds &lt; 31536000 </span><span class="cov2" title="4">{
                 return fmt.Sprintf("%.0f days", seconds/86400)
-        }</span> else<span class="cov3" title="7"> if seconds &lt; 31536000000 </span><span class="cov1" title="2">{
+        }</span> else<span class="cov3" title="14"> if seconds &lt; 31536000000 </span><span class="cov1" title="2">{
                 return fmt.Sprintf("%.0f years", seconds/31536000)
-        }</span> else<span class="cov2" title="5"> if seconds &lt; 31536000000000 </span><span class="cov1" title="1">{
+        }</span> else<span class="cov3" title="12"> if seconds &lt; 31536000000000 </span><span class="cov1" title="2">{
                 return fmt.Sprintf("%.0f thousand years", seconds/31536000000)
-        }</span> else<span class="cov2" title="4"> if seconds &lt; 31536000000000000 </span><span class="cov2" title="3">{
+        }</span> else<span class="cov3" title="10"> if seconds &lt; 31536000000000000 </span><span class="cov2" title="6">{
                 return fmt.Sprintf("%.0f million years", seconds/31536000000000)
-        }</span> else<span class="cov1" title="1"> {
+        }</span> else<span class="cov2" title="4"> {
                 return fmt.Sprintf("%.0f billion years", seconds/31536000000000000)
         }</span>
 }
 
-func reverseString(s string) string <span class="cov6" title="100">{
+func reverseString(s string) string <span class="cov6" title="226">{
         runes := []rune(s)
-        for i, j := 0, len(runes)-1; i &lt; j; i, j = i+1, j-1 </span><span class="cov8" title="618">{
+        for i, j := 0, len(runes)-1; i &lt; j; i, j = i+1, j-1 </span><span class="cov8" title="1388">{
                 runes[i], runes[j] = runes[j], runes[i]
         }</span>
-        <span class="cov6" title="100">return string(runes)</span>
+        <span class="cov6" title="226">return string(runes)</span>
 }
 </pre>
 		

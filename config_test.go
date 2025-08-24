@@ -334,6 +334,10 @@ func TestSaveConfigExampleValidPath(t *testing.T) {
 	}
 }
 
+// Note: Testing yaml.Marshal error path is difficult without complex mocking
+// as yaml.Marshal rarely fails with normal struct data. In practice, this
+// error path would only be hit with corrupted memory or similar system issues.
+
 func contains(s, substr string) bool {
 	return len(s) >= len(substr) && (s == substr || len(substr) == 0 ||
 		(len(s) > len(substr) && (s[:len(substr)] == substr || s[len(s)-len(substr):] == substr ||

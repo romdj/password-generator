@@ -448,6 +448,12 @@ func TestHasCommonPatterns(t *testing.T) {
 		{"contains password", "mypassword123", true},
 		{"contains qwerty", "qwerty123", true},
 		{"with substitutions", "p@ssw0rd", true},
+		{"admin pattern", "admin123", true},
+		{"login pattern", "login456", true},
+		{"welcome pattern", "welcome789", true},
+		{"monkey pattern", "monkey123", true},
+		{"completely random", "xK9#mP2@qR5", false},
+		{"mixed case but no patterns", "MyS3cur3P@ss", false},
 	}
 
 	for _, tt := range tests {
