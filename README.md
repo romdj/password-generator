@@ -23,7 +23,7 @@ A secure, configurable password generator written in Go with advanced features i
 ```bash
 git clone <repository-url>
 cd password-generator
-go build -o pwgen main.go
+go build -o pwgen .
 ```
 
 Or install directly:

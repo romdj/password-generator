@@ -32,7 +32,7 @@ jobs:
     
     - name: Test binary execution
       run: |
-        go build -o pwgen main.go
+        go build -o pwgen .
         ./pwgen --help
         ./pwgen -length 16 -count 3
     
