@@ -1,0 +1,93 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: 1.21
+    
+    - name: Get version
+      id: version
+      run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+    
+    - name: Build binaries
+      run: |
+        mkdir -p dist
+        
+        # Linux
+        GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o dist/pwgen-linux-amd64 main.go
+        GOOS=linux GOARCH=arm64 go build -ldflags="-s -w" -o dist/pwgen-linux-arm64 main.go
+        
+        # macOS
+        GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -o dist/pwgen-darwin-amd64 main.go
+        GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w" -o dist/pwgen-darwin-arm64 main.go
+        
+        # Windows
+        GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o dist/pwgen-windows-amd64.exe main.go
+    
+    - name: Create archives
+      run: |
+        cd dist
+        
+        # Create tar.gz for Unix-like systems
+        tar -czf pwgen-linux-amd64.tar.gz pwgen-linux-amd64
+        tar -czf pwgen-linux-arm64.tar.gz pwgen-linux-arm64
+        tar -czf pwgen-darwin-amd64.tar.gz pwgen-darwin-amd64
+        tar -czf pwgen-darwin-arm64.tar.gz pwgen-darwin-arm64
+        
+        # Create zip for Windows
+        zip pwgen-windows-amd64.zip pwgen-windows-amd64.exe
+    
+    - name: Generate checksums
+      run: |
+        cd dist
+        sha256sum *.tar.gz *.zip > checksums.txt
+    
+    - name: Create release
+      uses: softprops/action-gh-release@v1
+      with:
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+        files: |
+          dist/*.tar.gz
+          dist/*.zip
+          dist/checksums.txt
+        body: |
+          ## What's Changed
+          
+          Automated release of password generator ${{ steps.version.outputs.VERSION }}
+          
+          ### Installation
+          
+          Download the appropriate binary for your system:
+          - **Linux AMD64**: `pwgen-linux-amd64.tar.gz`
+          - **Linux ARM64**: `pwgen-linux-arm64.tar.gz`
+          - **macOS Intel**: `pwgen-darwin-amd64.tar.gz`
+          - **macOS Apple Silicon**: `pwgen-darwin-arm64.tar.gz`
+          - **Windows**: `pwgen-windows-amd64.zip`
+          
+          Extract and run:
+          ```bash
+          tar -xzf pwgen-*.tar.gz  # or unzip for Windows
+          ./pwgen --help
+          ```
+          
+          ### Checksums
+          
+          Verify your download with the provided `checksums.txt` file.
