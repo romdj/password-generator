@@ -6,10 +6,10 @@ import (
 
 func TestGetPolicy(t *testing.T) {
 	tests := []struct {
-		name        string
-		policyName  string
-		wantErr     bool
-		wantMinLen  int
+		name       string
+		policyName string
+		wantErr    bool
+		wantMinLen int
 	}{
 		{
 			name:       "basic policy",
@@ -43,7 +43,7 @@ func TestGetPolicy(t *testing.T) {
 				t.Errorf("GetPolicy() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			
+
 			if !tt.wantErr && policy.MinLength != tt.wantMinLen {
 				t.Errorf("GetPolicy() MinLength = %d, want %d", policy.MinLength, tt.wantMinLen)
 			}
@@ -54,12 +54,12 @@ func TestGetPolicy(t *testing.T) {
 func TestValidatePasswordAgainstPolicy(t *testing.T) {
 	basicPolicy, _ := GetPolicy("basic")
 	corporatePolicy, _ := GetPolicy("corporate")
-	
+
 	tests := []struct {
-		name            string
-		password        string
-		policy          PasswordPolicy
-		wantViolations  int
+		name           string
+		password       string
+		policy         PasswordPolicy
+		wantViolations int
 	}{
 		{
 			name:           "valid basic password",
@@ -97,7 +97,7 @@ func TestValidatePasswordAgainstPolicy(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			violations := ValidatePasswordAgainstPolicy(tt.password, tt.policy)
 			if len(violations) != tt.wantViolations {
-				t.Errorf("ValidatePasswordAgainstPolicy() violations = %d, want %d", 
+				t.Errorf("ValidatePasswordAgainstPolicy() violations = %d, want %d",
 					len(violations), tt.wantViolations)
 				for _, v := range violations {
 					t.Logf("  - %s: %s", v.Rule, v.Description)
@@ -109,26 +109,26 @@ func TestValidatePasswordAgainstPolicy(t *testing.T) {
 
 func TestApplyPolicyToConfig(t *testing.T) {
 	basicPolicy, _ := GetPolicy("basic")
-	
+
 	config := PasswordConfig{
-		Length:       6, // too short
-		IncludeUpper: false,
-		IncludeLower: true,
-		IncludeDigits: false,
-		IncludeSymbols: false,
+		Length:           6, // too short
+		IncludeUpper:     false,
+		IncludeLower:     true,
+		IncludeDigits:    false,
+		IncludeSymbols:   false,
 		ExcludeAmbiguous: false,
 	}
-	
+
 	ApplyPolicyToConfig(basicPolicy, &config)
-	
+
 	if config.Length < basicPolicy.MinLength {
 		t.Errorf("ApplyPolicyToConfig() length = %d, want >= %d", config.Length, basicPolicy.MinLength)
 	}
-	
+
 	if !config.IncludeUpper {
 		t.Error("ApplyPolicyToConfig() should enable uppercase letters")
 	}
-	
+
 	if !config.IncludeDigits {
 		t.Error("ApplyPolicyToConfig() should enable digits")
 	}
@@ -136,19 +136,19 @@ func TestApplyPolicyToConfig(t *testing.T) {
 
 func TestListPolicies(t *testing.T) {
 	policies := ListPolicies()
-	
+
 	expectedPolicies := []string{"basic", "corporate", "high-security", "aws", "azure", "pci-dss"}
-	
+
 	if len(policies) < len(expectedPolicies) {
 		t.Errorf("ListPolicies() returned %d policies, want at least %d", len(policies), len(expectedPolicies))
 	}
-	
+
 	// Check if all expected policies are present
 	policyMap := make(map[string]bool)
 	for _, policy := range policies {
 		policyMap[policy] = true
 	}
-	
+
 	for _, expected := range expectedPolicies {
 		if !policyMap[expected] {
 			t.Errorf("ListPolicies() missing expected policy: %s", expected)

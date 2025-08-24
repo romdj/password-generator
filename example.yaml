@@ -1,0 +1,15 @@
+# Password Generator Configuration
+# This file contains default settings for the password generator
+# Place this file in your home directory as ~/.pwgen.yaml or in the current directory as .pwgen.yaml
+# Environment variables (PWGEN_*) will override these settings
+# Command-line flags will override both config file and environment variables
+
+length: 16
+include_upper: true
+include_lower: true
+include_digits: true
+include_symbols: true
+exclude_ambiguous: true
+count: 1
+show_strength: true
+policy_template: corporate

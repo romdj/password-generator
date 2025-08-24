@@ -1,0 +1,88 @@
+#!/bin/bash
+
+# Pre-push hook for password generator
+# This hook runs before pushing to ensure the code is ready for main branch
+
+set -e
+
+protected_branch='main'
+current_branch=$(git rev-parse --abbrev-ref HEAD)
+
+echo "🚀 Running pre-push checks for branch: $current_branch"
+
+# Only run intensive checks for main branch pushes
+if [ "$current_branch" != "$protected_branch" ]; then
+    echo "ℹ️  Skipping intensive checks - not pushing to $protected_branch"
+    exit 0
+fi
+
+echo "🔍 Running comprehensive checks before pushing to $protected_branch..."
+
+# Run full test suite
+echo "🧪 Running full test suite..."
+if ! go test -race -v -count=1 ./...; then
+    echo "❌ Full test suite failed"
+    exit 1
+fi
+
+# Run tests with coverage
+echo "📊 Checking test coverage..."
+if ! go test -race -covermode=atomic -coverprofile=coverage.out ./...; then
+    echo "❌ Coverage test failed"
+    exit 1
+fi
+
+# Check coverage percentage
+coverage=$(go tool cover -func=coverage.out | grep total | awk '{print $3}' | sed 's/%//')
+if (( $(echo "$coverage < 70" | bc -l) )); then
+    echo "❌ Test coverage is below 70% (current: ${coverage}%)"
+    echo "Please add more tests before pushing to main"
+    exit 1
+fi
+echo "✅ Test coverage: ${coverage}%"
+
+# Clean up coverage file
+rm -f coverage.out
+
+# Build for multiple platforms to ensure cross-platform compatibility
+echo "🔨 Testing cross-platform builds..."
+platforms=("linux/amd64" "darwin/amd64" "windows/amd64")
+
+for platform in "${platforms[@]}"; do
+    GOOS=${platform%/*}
+    GOARCH=${platform#*/}
+    echo "  Building for $GOOS/$GOARCH..."
+    if ! env GOOS=$GOOS GOARCH=$GOARCH go build -o /tmp/pwgen-$GOOS-$GOARCH .; then
+        echo "❌ Build failed for $GOOS/$GOARCH"
+        exit 1
+    fi
+    rm -f /tmp/pwgen-$GOOS-$GOARCH
+done
+
+# Verify no debug prints or TODO comments in main code (excluding tests)
+echo "🔍 Checking for debug prints and TODOs..."
+if grep -r "fmt.Print\|TODO\|FIXME\|XXX" --include="*.go" --exclude="*_test.go" .; then
+    echo "❌ Found debug prints or TODO comments in main code"
+    echo "Please remove or address these before pushing to main"
+    exit 1
+fi
+
+# Check that version can be determined (for releases)
+echo "📋 Checking version information..."
+if git describe --tags --exact-match HEAD 2>/dev/null; then
+    version=$(git describe --tags --exact-match HEAD)
+    echo "✅ Tagged version: $version"
+else
+    echo "ℹ️  No version tag (normal for non-release commits)"
+fi
+
+# Ensure main branch is up to date with remote
+echo "🔄 Checking if branch is up to date..."
+git fetch origin $protected_branch --quiet
+if [ "$(git rev-parse HEAD)" != "$(git rev-parse @{u})" ]; then
+    echo "❌ Your $protected_branch branch is not up to date with origin"
+    echo "Please pull the latest changes first"
+    exit 1
+fi
+
+echo "✅ All pre-push checks passed! Ready to push to $protected_branch"

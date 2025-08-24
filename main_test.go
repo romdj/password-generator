@@ -14,9 +14,9 @@ func TestGeneratePassword(t *testing.T) {
 		{
 			name: "basic password",
 			config: PasswordConfig{
-				Length:       12,
-				IncludeUpper: true,
-				IncludeLower: true,
+				Length:        12,
+				IncludeUpper:  true,
+				IncludeLower:  true,
 				IncludeDigits: true,
 			},
 			want: 12,
@@ -24,7 +24,7 @@ func TestGeneratePassword(t *testing.T) {
 		{
 			name: "symbols only",
 			config: PasswordConfig{
-				Length:        8,
+				Length:         8,
 				IncludeSymbols: true,
 			},
 			want: 8,
@@ -49,11 +49,11 @@ func TestGeneratePassword(t *testing.T) {
 				t.Errorf("generatePassword() error = %v", err)
 				return
 			}
-			
+
 			if len(password) != tt.want {
 				t.Errorf("generatePassword() length = %v, want %v", len(password), tt.want)
 			}
-			
+
 			// Test ambiguous character exclusion
 			if tt.config.ExcludeAmbiguous {
 				for _, char := range Ambiguous {
@@ -115,9 +115,9 @@ func TestBuildCharset(t *testing.T) {
 		{
 			name: "all character types",
 			config: PasswordConfig{
-				IncludeUpper:  true,
-				IncludeLower:  true,
-				IncludeDigits: true,
+				IncludeUpper:   true,
+				IncludeLower:   true,
+				IncludeDigits:  true,
 				IncludeSymbols: true,
 			},
 			want: LowerCase + UpperCase + Digits + Symbols,

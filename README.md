@@ -182,16 +182,48 @@ This tool uses Go's `crypto/rand` package to ensure cryptographically secure pas
 
 ## Development
 
-### Testing
+### Quick Start
 
 ```bash
-go test -v ./...
+# Clone repository
+git clone <repository-url>
+cd password-generator
+
+# Set up development environment (hooks, tools)
+go run tools/setup/main.go all
+
+# Run all verification checks
+go run tools/setup/main.go verify
 ```
 
-### Building
+### Development Commands
 
 ```bash
-go build -o pwgen main.go
+# Testing
+go test -v ./...
+go run tools/setup/main.go verify  # Full verification suite
+
+# Building
+go build -o pwgen .
+
+# Setup and tools
+go run tools/setup/main.go hooks   # Install git hooks
+go run tools/setup/main.go tools   # Install dev tools
+```
+
+### Git Hooks & Quality
+
+This project uses automated git hooks for code quality:
+
+- **Pre-commit**: Formatting, linting, tests, security checks
+- **Pre-push**: Full test suite, coverage (>70%), cross-platform builds  
+- **Commit-msg**: Conventional commit format validation
+
+All commits must follow [Conventional Commits](https://www.conventionalcommits.org/):
+```
+feat: add new feature
+fix: resolve bug issue  
+docs: update documentation
 ```
 
 ### Contributing

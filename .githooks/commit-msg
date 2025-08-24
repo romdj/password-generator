@@ -1,0 +1,81 @@
+#!/bin/bash
+
+# Commit message hook for conventional commits
+# This hook validates commit messages follow conventional commit format
+
+commit_regex='^(feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert)(\(.+\))?: .{1,50}'
+
+# Read the commit message
+commit_message=$(cat "$1")
+
+# Skip validation for merge commits
+if [[ $commit_message =~ ^Merge ]]; then
+    exit 0
+fi
+
+# Skip validation for revert commits (they have special format)
+if [[ $commit_message =~ ^Revert ]]; then
+    exit 0
+fi
+
+echo "🔍 Validating commit message format..."
+
+if [[ ! $commit_message =~ $commit_regex ]]; then
+    echo "❌ Invalid commit message format!"
+    echo ""
+    echo "Your commit message:"
+    echo "  $commit_message"
+    echo ""
+    echo "Expected format (Conventional Commits):"
+    echo "  <type>[optional scope]: <description>"
+    echo ""
+    echo "Types:"
+    echo "  feat:     A new feature"
+    echo "  fix:      A bug fix"
+    echo "  docs:     Documentation only changes"
+    echo "  style:    Changes that do not affect the meaning of the code"
+    echo "  refactor: A code change that neither fixes a bug nor adds a feature"
+    echo "  test:     Adding missing tests or correcting existing tests"
+    echo "  chore:    Changes to the build process or auxiliary tools"
+    echo "  perf:     A code change that improves performance"
+    echo "  ci:       Changes to CI configuration files and scripts"
+    echo "  build:    Changes that affect the build system or external dependencies"
+    echo "  revert:   Reverts a previous commit"
+    echo ""
+    echo "Examples:"
+    echo "  feat: add password strength validation"
+    echo "  fix(auth): resolve login timeout issue"
+    echo "  docs: update installation instructions"
+    echo "  test: add unit tests for config loader"
+    echo ""
+    echo "Note: Description should be 50 characters or less"
+    exit 1
+fi
+
+# Additional checks for description
+description=$(echo "$commit_message" | head -1 | sed 's/^[^:]*: //')
+if [[ ${#description} -gt 50 ]]; then
+    echo "⚠️  Warning: Commit description is longer than 50 characters (${#description} chars)"
+    echo "Consider shortening: $description"
+    echo ""
+    echo "Continue anyway? (y/N)"
+    read -r response
+    if [[ ! $response =~ ^[Yy]$ ]]; then
+        exit 1
+    fi
+fi
+
+# Check for imperative mood in description
+if [[ $description =~ ^(added|fixed|updated|changed|removed|deleted|created) ]]; then
+    echo "⚠️  Warning: Use imperative mood (add/fix/update instead of added/fixed/updated)"
+    echo "  Current: $description"
+    echo "  Better:  $(echo "$description" | sed 's/added/add/g; s/fixed/fix/g; s/updated/update/g; s/changed/change/g; s/removed/remove/g; s/deleted/delete/g; s/created/create/g')"
+    echo ""
+    echo "Continue anyway? (y/N)"
+    read -r response
+    if [[ ! $response =~ ^[Yy]$ ]]; then
+        exit 1
+    fi
+fi
+
+echo "✅ Commit message format is valid"

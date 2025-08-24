@@ -67,9 +67,9 @@ type PasswordStrength struct {
 func AnalyzePasswordStrength(password string) PasswordStrength {
 	score := 0
 	var feedback []string
-	
+
 	length := len(password)
-	
+
 	// Length scoring
 	if length < 8 {
 		feedback = append(feedback, "Use at least 8 characters")
@@ -81,13 +81,13 @@ func AnalyzePasswordStrength(password string) PasswordStrength {
 	} else {
 		score += 30
 	}
-	
+
 	// Character variety scoring
 	hasLower := regexp.MustCompile(`[a-z]`).MatchString(password)
 	hasUpper := regexp.MustCompile(`[A-Z]`).MatchString(password)
 	hasDigit := regexp.MustCompile(`[0-9]`).MatchString(password)
 	hasSymbol := regexp.MustCompile(`[^a-zA-Z0-9]`).MatchString(password)
-	
+
 	varietyCount := 0
 	if hasLower {
 		varietyCount++
@@ -95,52 +95,52 @@ func AnalyzePasswordStrength(password string) PasswordStrength {
 	} else {
 		feedback = append(feedback, "Add lowercase letters")
 	}
-	
+
 	if hasUpper {
 		varietyCount++
 		score += 10
 	} else {
 		feedback = append(feedback, "Add uppercase letters")
 	}
-	
+
 	if hasDigit {
 		varietyCount++
 		score += 10
 	} else {
 		feedback = append(feedback, "Add numbers")
 	}
-	
+
 	if hasSymbol {
 		varietyCount++
 		score += 15
 	} else {
 		feedback = append(feedback, "Add symbols (!@#$%^&*)")
 	}
-	
+
 	// Bonus for using all character types
 	if varietyCount == 4 {
 		score += 10
 	}
-	
+
 	// Pattern penalties
 	if hasRepeatedChars(password) {
 		score -= 10
 		feedback = append(feedback, "Avoid repeated characters")
 	}
-	
+
 	if hasSequentialChars(password) {
 		score -= 15
 		feedback = append(feedback, "Avoid sequential characters (abc, 123)")
 	}
-	
+
 	if hasCommonPatterns(password) {
 		score -= 20
 		feedback = append(feedback, "Avoid common patterns")
 	}
-	
+
 	// Calculate entropy
 	entropy := calculateEntropy(password)
-	
+
 	// Adjust score based on entropy
 	if entropy >= 60 {
 		score += 20
@@ -150,7 +150,7 @@ func AnalyzePasswordStrength(password string) PasswordStrength {
 		score -= 15
 		feedback = append(feedback, "Password is too predictable")
 	}
-	
+
 	// Ensure score is within bounds
 	if score < 0 {
 		score = 0
@@ -158,18 +158,18 @@ func AnalyzePasswordStrength(password string) PasswordStrength {
 	if score > 100 {
 		score = 100
 	}
-	
+
 	// Determine strength level
 	level := getStrengthLevel(score)
-	
+
 	// Generate time to crack estimate
 	timeToCrack := estimateTimeToCrack(entropy)
-	
+
 	// Add positive feedback for strong passwords
 	if score >= 80 && len(feedback) == 0 {
 		feedback = append(feedback, "Excellent password strength!")
 	}
-	
+
 	return PasswordStrength{
 		Score:       score,
 		Level:       level,
@@ -182,7 +182,7 @@ func AnalyzePasswordStrength(password string) PasswordStrength {
 func calculateEntropy(password string) float64 {
 	// Determine character space
 	charSpace := 0
-	
+
 	if regexp.MustCompile(`[a-z]`).MatchString(password) {
 		charSpace += 26 // lowercase
 	}
@@ -195,14 +195,14 @@ func calculateEntropy(password string) float64 {
 	if regexp.MustCompile(`[^a-zA-Z0-9]`).MatchString(password) {
 		charSpace += 32 // common symbols
 	}
-	
+
 	if charSpace == 0 {
 		return 0
 	}
-	
+
 	// Entropy = length * log2(character_space)
 	entropy := float64(len(password)) * math.Log2(float64(charSpace))
-	
+
 	// Apply penalties for patterns
 	if hasRepeatedChars(password) {
 		entropy *= 0.8
@@ -213,7 +213,7 @@ func calculateEntropy(password string) float64 {
 	if hasCommonPatterns(password) {
 		entropy *= 0.6
 	}
-	
+
 	return entropy
 }
 
@@ -234,7 +234,7 @@ func hasSequentialChars(password string) bool {
 		"qwertyuiop", "asdfghjkl", "zxcvbnm",
 		"QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM",
 	}
-	
+
 	lower := strings.ToLower(password)
 	for _, seq := range sequences {
 		for i := 0; i <= len(seq)-3; i++ {
@@ -243,7 +243,7 @@ func hasSequentialChars(password string) bool {
 			}
 		}
 	}
-	
+
 	// Check for reverse sequences
 	for _, seq := range sequences {
 		reversed := reverseString(seq)
@@ -253,7 +253,7 @@ func hasSequentialChars(password string) bool {
 			}
 		}
 	}
-	
+
 	return false
 }
 
@@ -263,30 +263,30 @@ func hasCommonPatterns(password string) bool {
 		"welcome", "monkey", "dragon", "master", "shadow",
 		"letmein", "football", "iloveyou", "sunshine", "princess",
 	}
-	
+
 	lower := strings.ToLower(password)
 	for _, pattern := range commonPatterns {
 		if strings.Contains(lower, pattern) {
 			return true
 		}
 	}
-	
+
 	// Check for simple substitutions
 	substitutions := map[string]string{
 		"@": "a", "3": "e", "1": "i", "0": "o", "5": "s", "7": "t",
 	}
-	
+
 	normalized := lower
 	for symbol, letter := range substitutions {
 		normalized = strings.ReplaceAll(normalized, symbol, letter)
 	}
-	
+
 	for _, pattern := range commonPatterns {
 		if strings.Contains(normalized, pattern) {
 			return true
 		}
 	}
-	
+
 	return false
 }
 
@@ -310,13 +310,13 @@ func getStrengthLevel(score int) StrengthLevel {
 func estimateTimeToCrack(entropy float64) string {
 	// Assume 1 billion guesses per second (modern hardware)
 	guessesPerSecond := 1e9
-	
+
 	// Number of possible combinations
 	combinations := math.Pow(2, entropy)
-	
+
 	// Average time to crack (half the search space)
 	secondsToCrack := combinations / (2 * guessesPerSecond)
-	
+
 	return formatDuration(secondsToCrack)
 }
 

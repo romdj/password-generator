@@ -1,0 +1,86 @@
+#!/bin/bash
+
+# Pre-commit hook for password generator
+# This hook runs before each commit to ensure code quality
+
+set -e
+
+echo "🔍 Running pre-commit checks..."
+
+# Check if Go is installed
+if ! command -v go &> /dev/null; then
+    echo "❌ Go is not installed"
+    exit 1
+fi
+
+# Format code
+echo "📝 Formatting Go code..."
+if ! go fmt ./...; then
+    echo "❌ go fmt failed"
+    exit 1
+fi
+
+# Check for any formatting changes
+if [[ -n $(git diff --name-only) ]]; then
+    echo "⚠️  Code was reformatted. Please add the changes and commit again."
+    git diff --name-only
+    exit 1
+fi
+
+# Vet code
+echo "🔍 Running go vet..."
+if ! go vet ./...; then
+    echo "❌ go vet failed"
+    exit 1
+fi
+
+# Run tests
+echo "🧪 Running tests..."
+if ! go test -race -short ./...; then
+    echo "❌ Tests failed"
+    exit 1
+fi
+
+# Check for security vulnerabilities (if govulncheck is available)
+if command -v govulncheck &> /dev/null; then
+    echo "🔒 Checking for security vulnerabilities..."
+    if ! govulncheck ./...; then
+        echo "❌ Security vulnerabilities found"
+        exit 1
+    fi
+fi
+
+# Check for common Go issues with staticcheck (if available)
+if command -v staticcheck &> /dev/null; then
+    echo "🔍 Running staticcheck..."
+    if ! staticcheck ./...; then
+        echo "❌ staticcheck failed"
+        exit 1
+    fi
+fi
+
+# Verify module dependencies
+echo "📦 Verifying module dependencies..."
+if ! go mod verify; then
+    echo "❌ Module verification failed"
+    exit 1
+fi
+
+# Ensure go.mod and go.sum are tidy
+echo "🧹 Checking if go.mod is tidy..."
+go mod tidy
+if [[ -n $(git diff go.mod go.sum) ]]; then
+    echo "⚠️  go.mod or go.sum is not tidy. Please run 'go mod tidy' and commit the changes."
+    git diff go.mod go.sum
+    exit 1
+fi
+
+# Build the project to ensure it compiles
+echo "🔨 Building project..."
+if ! go build -o /tmp/pwgen-test .; then
+    echo "❌ Build failed"
+    exit 1
+fi
+rm -f /tmp/pwgen-test
+
+echo "✅ All pre-commit checks passed!"

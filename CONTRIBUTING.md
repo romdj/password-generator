@@ -11,7 +11,7 @@ We use trunk-based development for this project. This means all development happ
 3. **Keep changes small**: Each commit should be a cohesive, atomic unit of work
 4. **Feature flags for incomplete features**: Use feature flags rather than long-lived branches for work-in-progress features
 
-### Making Changes
+### Initial Setup
 
 1. **Clone the repository**:
    ```bash
@@ -19,24 +19,51 @@ We use trunk-based development for this project. This means all development happ
    cd password-generator
    ```
 
-2. **Make your changes**:
-   - Keep commits small and focused
-   - Write clear commit messages explaining the business context
-   - Test your changes locally before pushing
-
-3. **Test your changes**:
+2. **Set up development environment**:
    ```bash
-   go test ./...
-   go build -o pwgen main.go
-   ./pwgen --help
-   ./pwgen -length 16 -symbols -count 3
+   # Install git hooks and development tools
+   go run tools/setup/main.go all
+   
+   # Or set up components individually:
+   go run tools/setup/main.go hooks  # Git hooks only
+   go run tools/setup/main.go tools  # Dev tools only
    ```
 
-4. **Commit and push directly to main**:
+3. **Verify setup**:
    ```bash
+   go run tools/setup/main.go verify
+   ```
+
+### Making Changes
+
+1. **Use conventional commits**:
+   - All commits must follow conventional commit format
+   - Format: `<type>[optional scope]: <description>`
+   - Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`, `perf`, `ci`, `build`
+
+2. **Development cycle**:
+   ```bash
+   # Make your changes
+   # Pre-commit hooks will run automatically:
+   # - Code formatting (go fmt)
+   # - Linting (go vet, staticcheck)
+   # - Tests (go test)
+   # - Security checks (govulncheck)
+   
    git add .
-   git commit -m "Add feature X: clear description of change"
+   git commit -m "feat: add new password policy template"
+   
+   # Pre-push hooks run on push to main:
+   # - Full test suite with coverage check (>70%)
+   # - Cross-platform build verification
+   # - Additional quality checks
+   
    git push origin main
+   ```
+
+3. **Manual verification**:
+   ```bash
+   go run tools/setup/main.go verify
    ```
 
 ## Code Standards
@@ -86,13 +113,47 @@ Since we use trunk-based development:
 
 ## Release Process
 
-1. Ensure all tests pass
-2. Create and push a version tag:
+This project uses automated semantic versioning based on conventional commits.
+
+### Automated Releases
+
+1. **Ensure all tests pass and code is ready**:
    ```bash
-   git tag v1.0.0
-   git push origin v1.0.0
+   go run tools/setup/main.go verify
    ```
-3. GitHub Actions will automatically create a release with binaries
+
+2. **Generate release** (requires `standard-version`):
+   ```bash
+   # Install standard-version if not already installed
+   npm install -g standard-version
+   
+   # Generate changelog and create version tag
+   standard-version
+   
+   # Push changes and tags
+   git push --follow-tags
+   ```
+
+3. **GitHub Actions automatically**:
+   - Builds cross-platform binaries
+   - Generates changelog from conventional commits
+   - Creates GitHub release with downloadable assets
+   - Publishes release notes
+
+### Manual Release (if needed)
+
+```bash
+# Create and push version tag manually
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+### Release Types
+
+Based on conventional commits:
+- `feat:` → Minor version bump (1.0.0 → 1.1.0)
+- `fix:` → Patch version bump (1.0.0 → 1.0.1)
+- `feat!:` or `BREAKING CHANGE:` → Major version bump (1.0.0 → 2.0.0)
 
 ## Questions or Issues?
 

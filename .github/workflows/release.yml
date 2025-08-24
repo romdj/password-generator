@@ -21,24 +21,50 @@ jobs:
       with:
         go-version: 1.25
     
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    - name: Install standard-version
+      run: npm install -g standard-version
+    
     - name: Get version
       id: version
       run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+    
+    - name: Generate changelog
+      run: |
+        # Generate changelog from conventional commits
+        standard-version --dry-run > CHANGELOG_TEMP.md || true
+        
+        # Extract the changelog for this version
+        if [ -f CHANGELOG_TEMP.md ]; then
+          sed -n '/^## \[/,/^## \[/p' CHANGELOG_TEMP.md | head -n -1 > VERSION_CHANGELOG.md
+        fi
     
     - name: Build binaries
       run: |
         mkdir -p dist
         
+        # Get version from tag for ldflags
+        VERSION=${GITHUB_REF#refs/tags/}
+        BUILD_DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+        COMMIT_SHA=${GITHUB_SHA::7}
+        
+        # Build flags with version info
+        BUILD_FLAGS="-s -w -X main.Version=${VERSION} -X main.BuildDate=${BUILD_DATE} -X main.CommitSHA=${COMMIT_SHA}"
+        
         # Linux
-        GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o dist/pwgen-linux-amd64 main.go
-        GOOS=linux GOARCH=arm64 go build -ldflags="-s -w" -o dist/pwgen-linux-arm64 main.go
+        GOOS=linux GOARCH=amd64 go build -ldflags="${BUILD_FLAGS}" -o dist/pwgen-linux-amd64 .
+        GOOS=linux GOARCH=arm64 go build -ldflags="${BUILD_FLAGS}" -o dist/pwgen-linux-arm64 .
         
         # macOS
-        GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -o dist/pwgen-darwin-amd64 main.go
-        GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w" -o dist/pwgen-darwin-arm64 main.go
+        GOOS=darwin GOARCH=amd64 go build -ldflags="${BUILD_FLAGS}" -o dist/pwgen-darwin-amd64 .
+        GOOS=darwin GOARCH=arm64 go build -ldflags="${BUILD_FLAGS}" -o dist/pwgen-darwin-arm64 .
         
         # Windows
-        GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o dist/pwgen-windows-amd64.exe main.go
+        GOOS=windows GOARCH=amd64 go build -ldflags="${BUILD_FLAGS}" -o dist/pwgen-windows-amd64.exe .
     
     - name: Create archives
       run: |
@@ -57,37 +83,60 @@ jobs:
       run: |
         cd dist
         sha256sum *.tar.gz *.zip > checksums.txt
+        cat checksums.txt
+    
+    - name: Read changelog
+      id: changelog
+      run: |
+        if [ -f VERSION_CHANGELOG.md ]; then
+          echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
+          cat VERSION_CHANGELOG.md >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        else
+          echo "CHANGELOG=Automated release of password generator ${{ steps.version.outputs.VERSION }}" >> $GITHUB_OUTPUT
+        fi
     
     - name: Create release
       uses: softprops/action-gh-release@v1
       with:
         draft: false
-        prerelease: false
-        generate_release_notes: true
+        prerelease: ${{ contains(steps.version.outputs.VERSION, '-') }}
+        generate_release_notes: false
         files: |
           dist/*.tar.gz
           dist/*.zip
           dist/checksums.txt
         body: |
-          ## What's Changed
+          # Password Generator ${{ steps.version.outputs.VERSION }}
           
-          Automated release of password generator ${{ steps.version.outputs.VERSION }}
+          ${{ steps.changelog.outputs.CHANGELOG }}
           
-          ### Installation
+          ## Installation
           
           Download the appropriate binary for your system:
-          - **Linux AMD64**: `pwgen-linux-amd64.tar.gz`
-          - **Linux ARM64**: `pwgen-linux-arm64.tar.gz`
-          - **macOS Intel**: `pwgen-darwin-amd64.tar.gz`
-          - **macOS Apple Silicon**: `pwgen-darwin-arm64.tar.gz`
-          - **Windows**: `pwgen-windows-amd64.zip`
           
-          Extract and run:
+          | Platform | Architecture | Download |
+          |----------|--------------|----------|
+          | Linux | AMD64 | [pwgen-linux-amd64.tar.gz](https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.VERSION }}/pwgen-linux-amd64.tar.gz) |
+          | Linux | ARM64 | [pwgen-linux-arm64.tar.gz](https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.VERSION }}/pwgen-linux-arm64.tar.gz) |
+          | macOS | Intel | [pwgen-darwin-amd64.tar.gz](https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.VERSION }}/pwgen-darwin-amd64.tar.gz) |
+          | macOS | Apple Silicon | [pwgen-darwin-arm64.tar.gz](https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.VERSION }}/pwgen-darwin-arm64.tar.gz) |
+          | Windows | AMD64 | [pwgen-windows-amd64.zip](https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.VERSION }}/pwgen-windows-amd64.zip) |
+          
+          ### Quick Install
+          
           ```bash
-          tar -xzf pwgen-*.tar.gz  # or unzip for Windows
+          # Linux/macOS
+          curl -L https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.VERSION }}/pwgen-$(uname -s | tr '[:upper:]' '[:lower:]')-$(uname -m | sed 's/x86_64/amd64/').tar.gz | tar -xz
           ./pwgen --help
+          
+          # Or using Go
+          go install github.com/${{ github.repository }}@${{ steps.version.outputs.VERSION }}
           ```
           
-          ### Checksums
+          ### Verification
           
-          Verify your download with the provided `checksums.txt` file.
+          Verify your download with SHA256 checksums:
+          ```bash
+          curl -L https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.VERSION }}/checksums.txt
+          ```
