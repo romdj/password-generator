@@ -71,13 +71,13 @@ jobs:
       run: |
         mkdir -p dist
         if [ "$GOOS" = "windows" ]; then
-          go build -o dist/pwgen-$GOOS-$GOARCH.exe main.go
+          go build -o dist/pwgen-$GOOS-$GOARCH.exe .
         else
-          go build -o dist/pwgen-$GOOS-$GOARCH main.go
+          go build -o dist/pwgen-$GOOS-$GOARCH .
         fi
     
     - name: Upload artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: binaries
         path: dist/
