@@ -79,5 +79,5 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: binaries
+        name: binaries-${{ matrix.goos }}-${{ matrix.goarch }}
         path: dist/
