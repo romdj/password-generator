@@ -379,18 +379,19 @@ func TestAnalyzePasswordStrengthEdgeCases(t *testing.T) {
 
 func TestScoreOver100Capping(t *testing.T) {
 	// Create a password designed to score over 100 before capping
-	// Length bonus (30) + variety bonus (45) + all types bonus (10) + entropy bonus (20) = 105
-	password := "ThisIsAnExtremelyLongPasswordWithAllCharacterTypesABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;':\",./<>?"
+	// Use completely random characters avoiding any patterns
+	// Very long (30pts) + all char types (45pts) + all types bonus (10pts) + high entropy (20pts) = 105pts
+	password := "mKj8!pQx3@nZr7#bYf9$cWh4%dXk6&wTv5*uGs2+iNq1?oLm0_sEa"
 
 	strength := AnalyzePasswordStrength(password)
 
-	// The score should be capped at 100
+	// Log the actual score for debugging
+	t.Logf("Password score: %d, entropy: %.1f", strength.Score, strength.Entropy)
+	t.Logf("Feedback: %v", strength.Feedback)
+
+	// The score should be capped at 100 if it exceeds that
 	if strength.Score > 100 {
 		t.Errorf("Score should be capped at 100, got %d", strength.Score)
-	}
-
-	if strength.Score != 100 {
-		t.Logf("Expected score to be 100 (capped), got %d - this test is to hit the score > 100 capping logic", strength.Score)
 	}
 }
 
