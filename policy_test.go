@@ -107,6 +107,75 @@ func TestValidatePasswordAgainstPolicy(t *testing.T) {
 	}
 }
 
+func TestValidatePasswordAgainstPolicyExtended(t *testing.T) {
+	policy := PasswordPolicy{
+		Name:              "Test Policy",
+		MinLength:         8,
+		MaxLength:         20,
+		RequireUpper:      true,
+		RequireLower:      true,
+		RequireDigits:     true,
+		RequireSymbols:    true,
+		MinUpper:          2,
+		MinLower:          2,
+		MinDigits:         1,
+		MinSymbols:        1,
+		ExcludeAmbiguous:  true,
+		ForbiddenChars:    "xyz",
+		ForbiddenPatterns: []string{"test"},
+		MinEntropy:        50,
+	}
+
+	tests := []struct {
+		name           string
+		password       string
+		wantViolations []string
+	}{
+		{
+			name:           "too long password",
+			password:       "ThisPasswordIsTooLongForThePolicy123!",
+			wantViolations: []string{"MaxLength"},
+		},
+		{
+			name:           "forbidden chars",
+			password:       "Password123x!",
+			wantViolations: []string{"ForbiddenChars"},
+		},
+		{
+			name:           "forbidden pattern",
+			password:       "TestPassword123!",
+			wantViolations: []string{"ForbiddenPatterns"},
+		},
+		{
+			name:           "multiple violations",
+			password:       "short",
+			wantViolations: []string{"MinLength", "RequireUpper", "RequireDigits", "RequireSymbols", "MinUpper", "MinDigits", "MinSymbols", "MinEntropy"},
+		},
+		{
+			name:           "min lower violation",
+			password:       "PASSWORD123!",
+			wantViolations: []string{"MinLower"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			violations := ValidatePasswordAgainstPolicy(tt.password, policy)
+
+			violationRules := make(map[string]bool)
+			for _, v := range violations {
+				violationRules[v.Rule] = true
+			}
+
+			for _, expectedRule := range tt.wantViolations {
+				if !violationRules[expectedRule] {
+					t.Errorf("Expected violation rule '%s' not found", expectedRule)
+				}
+			}
+		})
+	}
+}
+
 func TestApplyPolicyToConfig(t *testing.T) {
 	basicPolicy, _ := GetPolicy("basic")
 
@@ -131,6 +200,133 @@ func TestApplyPolicyToConfig(t *testing.T) {
 
 	if !config.IncludeDigits {
 		t.Error("ApplyPolicyToConfig() should enable digits")
+	}
+}
+
+func TestApplyPolicyToConfigExtended(t *testing.T) {
+	tests := []struct {
+		name           string
+		policy         PasswordPolicy
+		initialConfig  PasswordConfig
+		expectedConfig PasswordConfig
+	}{
+		{
+			name: "max length constraint",
+			policy: PasswordPolicy{
+				MinLength: 8,
+				MaxLength: 12,
+			},
+			initialConfig: PasswordConfig{
+				Length: 20, // too long
+			},
+			expectedConfig: PasswordConfig{
+				Length: 12,
+			},
+		},
+		{
+			name: "require symbols",
+			policy: PasswordPolicy{
+				RequireSymbols: true,
+			},
+			initialConfig: PasswordConfig{
+				IncludeSymbols: false,
+			},
+			expectedConfig: PasswordConfig{
+				IncludeSymbols: true,
+			},
+		},
+		{
+			name: "exclude ambiguous",
+			policy: PasswordPolicy{
+				ExcludeAmbiguous: true,
+			},
+			initialConfig: PasswordConfig{
+				ExcludeAmbiguous: false,
+			},
+			expectedConfig: PasswordConfig{
+				ExcludeAmbiguous: true,
+			},
+		},
+		{
+			name: "no changes needed",
+			policy: PasswordPolicy{
+				MinLength:        8,
+				RequireUpper:     false,
+				RequireLower:     false,
+				RequireDigits:    false,
+				RequireSymbols:   false,
+				ExcludeAmbiguous: false,
+			},
+			initialConfig: PasswordConfig{
+				Length:           10,
+				IncludeUpper:     true,
+				IncludeLower:     true,
+				IncludeDigits:    true,
+				IncludeSymbols:   true,
+				ExcludeAmbiguous: true,
+			},
+			expectedConfig: PasswordConfig{
+				Length:           10,
+				IncludeUpper:     true,
+				IncludeLower:     true,
+				IncludeDigits:    true,
+				IncludeSymbols:   true,
+				ExcludeAmbiguous: true,
+			},
+		},
+		{
+			name: "all requirements",
+			policy: PasswordPolicy{
+				MinLength:        16,
+				RequireUpper:     true,
+				RequireLower:     true,
+				RequireDigits:    true,
+				RequireSymbols:   true,
+				ExcludeAmbiguous: true,
+			},
+			initialConfig: PasswordConfig{
+				Length:           10,
+				IncludeUpper:     false,
+				IncludeLower:     false,
+				IncludeDigits:    false,
+				IncludeSymbols:   false,
+				ExcludeAmbiguous: false,
+			},
+			expectedConfig: PasswordConfig{
+				Length:           16,
+				IncludeUpper:     true,
+				IncludeLower:     true,
+				IncludeDigits:    true,
+				IncludeSymbols:   true,
+				ExcludeAmbiguous: true,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config := tt.initialConfig
+			ApplyPolicyToConfig(tt.policy, &config)
+
+			if config.Length != tt.expectedConfig.Length {
+				t.Errorf("ApplyPolicyToConfig() Length = %d, want %d", config.Length, tt.expectedConfig.Length)
+			}
+			if config.IncludeUpper != tt.expectedConfig.IncludeUpper {
+				t.Errorf("ApplyPolicyToConfig() IncludeUpper = %v, want %v", config.IncludeUpper, tt.expectedConfig.IncludeUpper)
+			}
+			if config.IncludeLower != tt.expectedConfig.IncludeLower {
+				t.Errorf("ApplyPolicyToConfig() IncludeLower = %v, want %v", config.IncludeLower, tt.expectedConfig.IncludeLower)
+			}
+			if config.IncludeDigits != tt.expectedConfig.IncludeDigits {
+				t.Errorf("ApplyPolicyToConfig() IncludeDigits = %v, want %v", config.IncludeDigits, tt.expectedConfig.IncludeDigits)
+			}
+			if config.IncludeSymbols != tt.expectedConfig.IncludeSymbols {
+				t.Errorf("ApplyPolicyToConfig() IncludeSymbols = %v, want %v", config.IncludeSymbols, tt.expectedConfig.IncludeSymbols)
+			}
+			if config.ExcludeAmbiguous != tt.expectedConfig.ExcludeAmbiguous {
+				t.Errorf("ApplyPolicyToConfig() ExcludeAmbiguous = %v, want %v", config.ExcludeAmbiguous, tt.expectedConfig.ExcludeAmbiguous)
+			}
+		})
 	}
 }
 

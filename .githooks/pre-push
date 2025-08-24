@@ -25,17 +25,17 @@ if ! go test -race -v -count=1 ./...; then
     exit 1
 fi
 
-# Run tests with coverage
+# Run tests with coverage (excluding tools directory)
 echo "📊 Checking test coverage..."
-if ! go test -race -covermode=atomic -coverprofile=coverage.out ./...; then
+if ! go test -race -covermode=atomic -coverprofile=coverage.out $(go list ./... | grep -v '/tools/'); then
     echo "❌ Coverage test failed"
     exit 1
 fi
 
 # Check coverage percentage
 coverage=$(go tool cover -func=coverage.out | grep total | awk '{print $3}' | sed 's/%//')
-if (( $(echo "$coverage < 70" | bc -l) )); then
-    echo "❌ Test coverage is below 70% (current: ${coverage}%)"
+if (( $(echo "$coverage < 85" | bc -l) )); then
+    echo "❌ Test coverage is below 85% (current: ${coverage}%)"
     echo "Please add more tests before pushing to main"
     exit 1
 fi

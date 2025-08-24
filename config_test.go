@@ -111,6 +111,156 @@ func TestConfigToPasswordConfig(t *testing.T) {
 	}
 }
 
+func TestLoadConfig(t *testing.T) {
+	// Test loading config when no config files exist
+	config, err := LoadConfig()
+	if err != nil {
+		t.Errorf("LoadConfig() error = %v", err)
+	}
+
+	// Should return default config when no files exist
+	defaultConfig := DefaultConfig()
+	if config.Length != defaultConfig.Length {
+		t.Errorf("LoadConfig() Length = %d, want %d", config.Length, defaultConfig.Length)
+	}
+}
+
+func TestLoadConfigWithFile(t *testing.T) {
+	// Save current directory to restore later
+	originalDir, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("Failed to get current directory: %v", err)
+	}
+
+	// Create a temporary directory and change to it
+	tempDir := t.TempDir()
+	err = os.Chdir(tempDir)
+	if err != nil {
+		t.Fatalf("Failed to change directory: %v", err)
+	}
+
+	defer func() {
+		os.Chdir(originalDir)
+	}()
+
+	// Create a test config file
+	configContent := `length: 20
+include_upper: false
+include_symbols: true
+count: 3`
+
+	err = os.WriteFile(".pwgen.yaml", []byte(configContent), 0644)
+	if err != nil {
+		t.Fatalf("Failed to create test config file: %v", err)
+	}
+
+	config, err := LoadConfig()
+	if err != nil {
+		t.Errorf("LoadConfig() error = %v", err)
+	}
+
+	if config.Length != 20 {
+		t.Errorf("LoadConfig() Length = %d, want 20", config.Length)
+	}
+
+	if config.IncludeUpper != false {
+		t.Errorf("LoadConfig() IncludeUpper = %v, want false", config.IncludeUpper)
+	}
+
+	if config.IncludeSymbols != true {
+		t.Errorf("LoadConfig() IncludeSymbols = %v, want true", config.IncludeSymbols)
+	}
+
+	if config.Count != 3 {
+		t.Errorf("LoadConfig() Count = %d, want 3", config.Count)
+	}
+}
+
+func TestLoadConfigFromFile(t *testing.T) {
+	tempDir := t.TempDir()
+	configPath := filepath.Join(tempDir, "test-config.yaml")
+
+	// Create a test config file
+	configContent := `length: 20
+include_upper: false
+include_symbols: true
+count: 3`
+
+	err := os.WriteFile(configPath, []byte(configContent), 0644)
+	if err != nil {
+		t.Fatalf("Failed to create test config file: %v", err)
+	}
+
+	config := DefaultConfig()
+	err = loadConfigFromFile(configPath, &config)
+	if err != nil {
+		t.Errorf("loadConfigFromFile() error = %v", err)
+	}
+
+	if config.Length != 20 {
+		t.Errorf("loadConfigFromFile() Length = %d, want 20", config.Length)
+	}
+
+	if config.IncludeUpper != false {
+		t.Errorf("loadConfigFromFile() IncludeUpper = %v, want false", config.IncludeUpper)
+	}
+
+	if config.IncludeSymbols != true {
+		t.Errorf("loadConfigFromFile() IncludeSymbols = %v, want true", config.IncludeSymbols)
+	}
+
+	// Test with non-existent file
+	err = loadConfigFromFile("nonexistent.yaml", &config)
+	if err == nil {
+		t.Error("loadConfigFromFile() should return error for non-existent file")
+	}
+}
+
+func TestLoadConfigFromEnvExtended(t *testing.T) {
+	// Test all environment variables
+	envVars := map[string]string{
+		"PWGEN_LENGTH":            "24",
+		"PWGEN_INCLUDE_UPPER":     "false",
+		"PWGEN_INCLUDE_LOWER":     "true",
+		"PWGEN_INCLUDE_DIGITS":    "false",
+		"PWGEN_INCLUDE_SYMBOLS":   "true",
+		"PWGEN_EXCLUDE_AMBIGUOUS": "true",
+		"PWGEN_COUNT":             "5",
+		"PWGEN_SHOW_STRENGTH":     "true",
+		"PWGEN_POLICY_TEMPLATE":   "high-security",
+	}
+
+	// Set environment variables
+	for key, value := range envVars {
+		os.Setenv(key, value)
+	}
+
+	defer func() {
+		for key := range envVars {
+			os.Unsetenv(key)
+		}
+	}()
+
+	config := DefaultConfig()
+	loadConfigFromEnv(&config)
+
+	if config.Length != 24 {
+		t.Errorf("loadConfigFromEnv() Length = %d, want 24", config.Length)
+	}
+
+	if config.IncludeUpper != false {
+		t.Errorf("loadConfigFromEnv() IncludeUpper = %v, want false", config.IncludeUpper)
+	}
+
+	if config.Count != 5 {
+		t.Errorf("loadConfigFromEnv() Count = %d, want 5", config.Count)
+	}
+
+	if config.PolicyTemplate != "high-security" {
+		t.Errorf("loadConfigFromEnv() PolicyTemplate = %s, want high-security", config.PolicyTemplate)
+	}
+}
+
 func TestSaveConfigExample(t *testing.T) {
 	tempDir := t.TempDir()
 	configPath := filepath.Join(tempDir, "test-config.yaml")
@@ -151,6 +301,36 @@ func TestSaveConfigExample(t *testing.T) {
 		if !contains(contentStr, expected) {
 			t.Errorf("SaveConfigExample() missing expected content: %s", expected)
 		}
+	}
+}
+
+func TestSaveConfigExampleError(t *testing.T) {
+	// Test error case - try to write to invalid path
+	invalidPath := "/dev/null/invalid/path/config.yaml"
+	err := SaveConfigExample(invalidPath)
+	if err == nil {
+		t.Error("SaveConfigExample() should return error for invalid path")
+	}
+}
+
+func TestSaveConfigExampleValidPath(t *testing.T) {
+	// Test normal operation to improve coverage
+	tempDir := t.TempDir()
+	configPath := filepath.Join(tempDir, "valid-config.yaml")
+
+	err := SaveConfigExample(configPath)
+	if err != nil {
+		t.Errorf("SaveConfigExample() error = %v", err)
+	}
+
+	// Verify file was created and has content
+	content, err := os.ReadFile(configPath)
+	if err != nil {
+		t.Errorf("Failed to read created config file: %v", err)
+	}
+
+	if len(content) == 0 {
+		t.Error("SaveConfigExample() created empty config file")
 	}
 }
 

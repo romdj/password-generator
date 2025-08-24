@@ -106,6 +106,77 @@ func TestValidateConfig(t *testing.T) {
 	}
 }
 
+func TestGeneratePasswordErrorCases(t *testing.T) {
+	// Test error case where no character types are enabled
+	config := PasswordConfig{
+		Length: 10,
+		// All character types disabled
+	}
+
+	password, err := generatePassword(config)
+	if err == nil {
+		t.Error("generatePassword() should return error when no character types enabled")
+	}
+
+	if password != "" {
+		t.Errorf("generatePassword() should return empty string on error, got %s", password)
+	}
+}
+
+func TestGeneratePasswordEdgeCases(t *testing.T) {
+	tests := []struct {
+		name    string
+		config  PasswordConfig
+		wantErr bool
+		wantLen int
+	}{
+		{
+			name: "zero length password",
+			config: PasswordConfig{
+				Length:       0,
+				IncludeUpper: true,
+			},
+			wantErr: false,
+			wantLen: 0,
+		},
+		{
+			name: "single character password",
+			config: PasswordConfig{
+				Length:       1,
+				IncludeUpper: true,
+			},
+			wantErr: false,
+			wantLen: 1,
+		},
+		{
+			name: "very long password",
+			config: PasswordConfig{
+				Length:         100,
+				IncludeUpper:   true,
+				IncludeLower:   true,
+				IncludeDigits:  true,
+				IncludeSymbols: true,
+			},
+			wantErr: false,
+			wantLen: 100,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			password, err := generatePassword(tt.config)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("generatePassword() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if len(password) != tt.wantLen {
+				t.Errorf("generatePassword() length = %d, want %d", len(password), tt.wantLen)
+			}
+		})
+	}
+}
+
 func TestBuildCharset(t *testing.T) {
 	tests := []struct {
 		name   string
