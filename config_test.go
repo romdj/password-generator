@@ -9,8 +9,8 @@ import (
 func TestDefaultConfig(t *testing.T) {
 	config := DefaultConfig()
 
-	if config.Length != 12 {
-		t.Errorf("DefaultConfig() Length = %d, want 12", config.Length)
+	if config.Length != 20 {
+		t.Errorf("DefaultConfig() Length = %d, want 20", config.Length)
 	}
 
 	if !config.IncludeUpper {
@@ -25,8 +25,8 @@ func TestDefaultConfig(t *testing.T) {
 		t.Error("DefaultConfig() should include digits by default")
 	}
 
-	if config.IncludeSymbols {
-		t.Error("DefaultConfig() should not include symbols by default")
+	if !config.IncludeSymbols {
+		t.Error("DefaultConfig() should include symbols by default")
 	}
 }
 

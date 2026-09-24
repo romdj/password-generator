@@ -24,11 +24,11 @@ type Config struct {
 
 func DefaultConfig() Config {
 	return Config{
-		Length:           12,
+		Length:           20,
 		IncludeUpper:     true,
 		IncludeLower:     true,
 		IncludeDigits:    true,
-		IncludeSymbols:   false,
+		IncludeSymbols:   true,
 		ExcludeAmbiguous: false,
 		Count:            1,
 		ShowStrength:     false,

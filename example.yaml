@@ -4,7 +4,7 @@
 # Environment variables (PWGEN_*) will override these settings
 # Command-line flags will override both config file and environment variables
 
-length: 16
+length: 20
 include_upper: true
 include_lower: true
 include_digits: true
