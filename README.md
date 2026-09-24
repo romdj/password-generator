@@ -5,7 +5,7 @@ A secure, configurable password generator written in Go with advanced features i
 ## Features
 
 ### Core Features
-- **Configurable Length**: Set password length (default: 12 characters)
+- **Configurable Length**: Set password length (default: 20 characters)
 - **Character Types**: Choose from uppercase, lowercase, digits, and symbols
 - **Ambiguous Character Exclusion**: Option to exclude confusing characters (0, O, 1, l, I)
 - **Multiple Passwords**: Generate multiple passwords in one command
@@ -31,13 +31,23 @@ Or install directly:
 go install github.com/romdj/password-generator@latest
 ```
 
+To install a locally built `pwgen` binary so it can be run from any directory:
+
+```bash
+go run ./tools/install
+```
+
+This installs it to `~/.local/bin/pwgen`; make sure that directory is on your
+`PATH`.
+
 ## Usage
 
 ### Basic Usage
 
 ```bash
-# Generate a 12-character password (default)
-go run main.go
+# Generate a 20-character password with upper- and lowercase letters, digits,
+# and symbols (default)
+go run .
 
 # Build and use the binary
 ./pwgen
@@ -50,11 +60,11 @@ go run main.go
 
 | Flag | Short | Default | Description |
 |------|-------|---------|-------------|
-| `--length` | `-l` | 12 | Password length |
+| `--length` | `-l` | 20 | Password length |
 | `--upper` | `-u` | true | Include uppercase letters |
 | `--lower` | `-L` | true | Include lowercase letters |
 | `--digits` | `-d` | true | Include digits |
-| `--symbols` | `-s` | false | Include symbols |
+| `--symbols` | `-s` | true | Include symbols |
 | `--no-ambiguous` | `-n` | false | Exclude ambiguous characters |
 | `--count` | `-c` | 1 | Number of passwords to generate |
 | `--strength` | `-S` | false | Show password strength analysis |
